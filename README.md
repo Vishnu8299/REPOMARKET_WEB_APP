@@ -1,4 +1,4 @@
-# JWT Demo Platform
+# REPOMARKET Platform
 
 This repository contains a full-stack platform for job, internship, project, and hackathon management, built with Spring Boot (Java) for the backend and React (TypeScript) for the frontend.
 
