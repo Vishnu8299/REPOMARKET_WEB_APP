@@ -10,10 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -28,41 +28,54 @@ public class HackathonController {
     private HackathonService hackathonService;
 
     @PostMapping
-    @PreAuthorize("hasRole('BUYER')")
-    public Mono<ResponseEntity<ApiResponse<Hackathon>>> createHackathon(
-            @Valid @RequestBody Hackathon hackathon,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        hackathon.setOrganizerId(userDetails.getUsername()); // Set the authenticated user's ID
-        logger.info("Creating hackathon: {} by organizer: {}", hackathon.getName(), hackathon.getOrganizerId());
-        
-        return hackathonService.createHackathon(hackathon)
-                .map(createdHackathon -> ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(ApiResponse.success(createdHackathon, "Hackathon created successfully"))
-                )
-                    .onErrorResume(ex -> {
-                        HttpStatus status = ex instanceof IllegalArgumentException ? 
-                            HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR;
-                        logger.error("Failed to create hackathon: {}", ex.getMessage(), ex);
-                        return Mono.just(ResponseEntity
-                            .status(status)
-                            .body(ApiResponse.error("Hackathon creation failed: " + ex.getMessage())));
-                    });
+@PreAuthorize("hasRole('BUYER')")
+public Mono<ResponseEntity<ApiResponse<Hackathon>>> createHackathon(
+        @Valid @RequestBody(required = false) Hackathon hackathon) {
+
+    if (hackathon == null) {
+        return Mono.just(ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("Request body is missing or invalid")));
     }
 
+    return ReactiveSecurityContextHolder.getContext()
+            .map(securityContext -> (UserDetails) securityContext.getAuthentication().getPrincipal())
+            .flatMap(userDetails -> {
+                hackathon.setOrganizerId(userDetails.getUsername());
+
+                logger.info("Creating hackathon: {} by organizer: {}", hackathon.getName(), hackathon.getOrganizerId());
+
+                return hackathonService.createHackathon(hackathon)
+                        .map(createdHackathon -> ResponseEntity
+                                .status(HttpStatus.CREATED)
+                                .body(ApiResponse.success(createdHackathon, "Hackathon created successfully"))
+                        );
+            })
+            .onErrorResume(ex -> {
+                HttpStatus status = ex instanceof IllegalArgumentException ?
+                        HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR;
+                logger.error("Failed to create hackathon: {}", ex.getMessage(), ex);
+                return Mono.just(ResponseEntity
+                        .status(status)
+                        .body(ApiResponse.error("Hackathon creation failed: " + ex.getMessage())));
+            });
+}
+
+
     @GetMapping
-    public ResponseEntity<ApiResponse<Flux<Hackathon>>> getAllHackathons() {
+    public Mono<ResponseEntity<ApiResponse<java.util.List<Hackathon>>>> getAllHackathons() {
         logger.info("Retrieving all hackathons");
-        try {
-            Flux<Hackathon> hackathons = hackathonService.getAllHackathons();
-            return ResponseEntity.ok(ApiResponse.success(hackathons, "Hackathons retrieved successfully"));
-        } catch (Exception ex) {
-            logger.error("Failed to retrieve hackathons", ex);
-            return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Failed to retrieve hackathons: " + ex.getMessage()));
-        }
+        return hackathonService.getAllHackathons()
+            .collectList()
+            .map(hackathons -> ResponseEntity.ok(
+                ApiResponse.success(hackathons, "Hackathons retrieved successfully")
+            ))
+            .onErrorResume(ex -> {
+                logger.error("Failed to retrieve hackathons", ex);
+                return Mono.just(ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve hackathons: " + ex.getMessage())));
+            });
     }
 
     @PostMapping("/{hackathonId}/register")
@@ -72,11 +85,11 @@ public class HackathonController {
             @AuthenticationPrincipal UserDetails userDetails) {
         String userId = userDetails.getUsername();
         logger.info("Registering participant {} for hackathon {}", userId, hackathonId);
-        
+
         return hackathonService.registerParticipant(hackathonId, userId)
                 .thenReturn(ResponseEntity.ok(ApiResponse.<Void>success(null, "Participant registered successfully")))
                 .onErrorResume(ex -> {
-                    HttpStatus status = ex instanceof IllegalArgumentException ? 
+                    HttpStatus status = ex instanceof IllegalArgumentException ?
                         HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR;
                     logger.error("Failed to register participant", ex);
                     return Mono.just(ResponseEntity

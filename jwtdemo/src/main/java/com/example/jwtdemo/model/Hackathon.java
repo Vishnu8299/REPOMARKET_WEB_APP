@@ -27,13 +27,13 @@ public class Hackathon {
     @NotBlank(message = "End date is required")
     private String endDate;
 
-    @NotBlank(message = "Organizer ID is required")
+   
     private String organizerId;
 
-    @NotNull(message = "Participants list is required")
+    
     private List<String> participants;
 
-    @Min(value = 1, message = "Maximum participants must be at least 1")
+    
     private int maxParticipants;
 
     @Size(min = 1, message = "At least one prize must be specified")
