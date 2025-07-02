@@ -16,7 +16,7 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: 'BUYER' as UserRole
+    role: 'DEVELOPER' as UserRole
   });
   const { login } = useAuth();
   const navigate = useNavigate();
