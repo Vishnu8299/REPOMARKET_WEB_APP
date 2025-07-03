@@ -23,23 +23,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/developer")
-    @PreAuthorize("hasRole('ADMIN')")
-    public Mono<ResponseEntity<ApiResponse<User>>> registerDeveloper(
-            @Valid @RequestBody User user) {
-        logger.info("Registering developer: {}", user.getEmail());
-        return userService.registerUser(user)
-                .map(registeredUser -> ResponseEntity.ok(
-                    ApiResponse.success(registeredUser, "Developer registered successfully")
-                ))
-                .onErrorResume(ex -> {
-                    logger.error("Failed to register developer", ex);
-                    return Mono.just(ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body(ApiResponse.error("Developer registration failed: " + ex.getMessage())));
-                });
-    }
-
     @PostMapping("/buyer")
     // Temporarily remove @PreAuthorize annotation
     public Mono<ResponseEntity<ApiResponse<User>>> registerBuyer(
@@ -147,8 +130,13 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public Mono<ResponseEntity<ApiResponse<User>>> updateUserStatus(
             @PathVariable @NotBlank(message = "User ID cannot be blank") String userId,
-            @RequestParam boolean active) {
+            @RequestParam(value = "active", required = false) Boolean active) {
         logger.info("Updating user status for user: {}", userId);
+        if (active == null) {
+            return Mono.just(ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("Query parameter 'active' is required")));
+        }
         return userService.updateUserStatus(userId, active)
                 .map(updatedUser -> ResponseEntity.ok(
                     ApiResponse.success(updatedUser, "User status updated successfully")

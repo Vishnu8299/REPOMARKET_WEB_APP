@@ -81,20 +81,31 @@ public Mono<ResponseEntity<ApiResponse<Hackathon>>> createHackathon(
     @PostMapping("/{hackathonId}/register")
     @PreAuthorize("hasRole('DEVELOPER')")
     public Mono<ResponseEntity<ApiResponse<Void>>> registerParticipant(
-            @PathVariable @NotBlank(message = "Hackathon ID cannot be blank") String hackathonId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        String userId = userDetails.getUsername();
-        logger.info("Registering participant {} for hackathon {}", userId, hackathonId);
+            @PathVariable @NotBlank(message = "Hackathon ID cannot be blank") String hackathonId) {
+        return ReactiveSecurityContextHolder.getContext()
+            .map(securityContext -> {
+                Object principal = securityContext.getAuthentication().getPrincipal();
+                if (principal instanceof UserDetails) {
+                    return ((UserDetails) principal).getUsername();
+                } else if (principal instanceof String) {
+                    return (String) principal;
+                } else {
+                    throw new IllegalArgumentException("Unable to extract username from principal");
+                }
+            })
+            .flatMap(userId -> {
+                logger.info("Registering participant {} for hackathon {}", userId, hackathonId);
 
-        return hackathonService.registerParticipant(hackathonId, userId)
-                .thenReturn(ResponseEntity.ok(ApiResponse.<Void>success(null, "Participant registered successfully")))
-                .onErrorResume(ex -> {
-                    HttpStatus status = ex instanceof IllegalArgumentException ?
-                        HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR;
-                    logger.error("Failed to register participant", ex);
-                    return Mono.just(ResponseEntity
-                        .status(status)
-                        .body(ApiResponse.error("Participant registration failed: " + ex.getMessage())));
-                });
+                return hackathonService.registerParticipant(hackathonId, userId)
+                        .thenReturn(ResponseEntity.ok(ApiResponse.<Void>success(null, "Participant registered successfully")));
+            })
+            .onErrorResume(ex -> {
+                HttpStatus status = ex instanceof IllegalArgumentException ?
+                    HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR;
+                logger.error("Failed to register participant", ex);
+                return Mono.just(ResponseEntity
+                    .status(status)
+                    .body(ApiResponse.error("Participant registration failed: " + ex.getMessage())));
+            });
     }
 }

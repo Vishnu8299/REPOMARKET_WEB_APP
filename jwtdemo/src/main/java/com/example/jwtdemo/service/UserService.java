@@ -70,7 +70,6 @@ public class UserService {
                 if (userData.getName() != null) existingUser.setName(userData.getName());
                 if (userData.getPhoneNumber() != null) existingUser.setPhoneNumber(userData.getPhoneNumber());
                 if (userData.getOrganization() != null) existingUser.setOrganization(userData.getOrganization());
-                if (userData.getBio() != null) existingUser.setBio(userData.getBio());
                 // Add this line to update description field
                 if (userData.getDescription() != null) existingUser.setDescription(userData.getDescription());
                 return userRepository.save(existingUser);

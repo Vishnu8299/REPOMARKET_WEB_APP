@@ -204,11 +204,17 @@ public class ProjectController {
         });
     }
 
-    @PostMapping("/{projectId}/purchase")
+@PostMapping("/{projectId}/purchase")
     @PreAuthorize("hasRole('BUYER')")
     public Mono<ResponseEntity<ApiResponse<String>>> purchaseProject(
             @PathVariable @NotBlank(message = "Project ID cannot be blank") String projectId,
-            @RequestParam @NotBlank(message = "Buyer ID cannot be blank") String buyerId) {
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return Mono.just(ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("User not authenticated")));
+        }
+        String buyerId = authentication.getName();
         logger.info("Purchasing project {} by buyer {}", projectId, buyerId);
         return projectService.purchaseProject(projectId, buyerId)
                 .then(Mono.just(ResponseEntity.ok(

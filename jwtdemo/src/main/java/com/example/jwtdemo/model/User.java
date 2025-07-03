@@ -27,7 +27,5 @@ public class User {
     private String phoneNumber;
     private boolean isActive;
     private String createdAt;
-    // Add this field for bio/description support
-    private String bio;
     private String description;
 }
