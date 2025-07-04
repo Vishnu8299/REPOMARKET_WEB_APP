@@ -83,11 +83,11 @@ const Marketplace = () => {
     },
     { 
       label: "Marketplace", 
-      href: "/buyer/marketplace",
+      href: "/buyer/MarketplaceNav", // <-- Update this line
       icon: ShoppingBag,
       badge: "New",
       badgeColor: "bg-green-500",
-      description: "Browse repositories" 
+      description: "Browse repositories"
     },
     {
       label: "Engage Hub",
@@ -208,7 +208,14 @@ const Marketplace = () => {
                     <Button
                       variant="ghost"
                       className="flex items-center space-x-2"
-                      onClick={() => item.items && setActiveDropdown(activeDropdown === item.label ? null : item.label)}
+                      onClick={() => {
+                        if (item.href) {
+                          navigate(item.href);
+                          setActiveDropdown(null);
+                        } else if (item.items) {
+                          setActiveDropdown(activeDropdown === item.label ? null : item.label);
+                        }
+                      }}
                     >
                       {item.icon && <item.icon className="w-4 h-4" />}
                       <span>{item.label}</span>
@@ -311,25 +318,6 @@ const Marketplace = () => {
         <div className="relative z-10">
           <motion.div className="min-h-screen relative">
             <HeroSectionBUYER />
-          </motion.div>
-
-          <motion.div 
-            className="min-h-screen relative flex items-center justify-center px-6"
-            style={parallax.content}
-          >
-            <div className="w-full max-w-6xl">
-              <motion.div
-                className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl border border-blue-100/50"
-                initial={false}
-                animate={{ 
-                  y: [50, 0],
-                  opacity: [0, 1],
-                  transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
-                }}
-              >
-                <NewRepo />
-              </motion.div>
-            </div>
           </motion.div>
         </div>
 

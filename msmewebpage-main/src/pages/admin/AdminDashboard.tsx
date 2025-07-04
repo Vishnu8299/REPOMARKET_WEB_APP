@@ -66,7 +66,7 @@ const statItems = [
 const sidebarItems = [
   { label: "Dashboard", icon: <DashboardIcon />, path: "/admin" },
   { label: "Users", icon: <GroupIcon />, path: "/admin/userlist" },
-  { label: "Hackathons", icon: <EmojiEventsIcon />, path: "/admin/hackathons" },
+  { label: "Hackathons", icon: <EmojiEventsIcon />, path: "/admin/hackathons-list" },
 ];
 
 const AdminDashboard: React.FC = () => {
@@ -365,6 +365,43 @@ const AdminDashboard: React.FC = () => {
               onClick={() => navigate("/admin/hackathons")}
             >
               Manage Hackathons
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              size="large"
+              sx={{
+                bgcolor: "#43a047",
+                color: "#fff",
+                fontWeight: 600,
+                px: 4,
+                borderRadius: 2,
+                boxShadow: "0 2px 8px rgba(67, 160, 71, 0.2)",
+                "&:hover": { bgcolor: "#388e3c" },
+              }}
+              onClick={() => navigate("/admin/create-hackathon")}
+            >
+              Create Hackathon
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              size="large"
+              sx={{
+                color: "#43a047",
+                borderColor: "#43a047",
+                fontWeight: 600,
+                px: 4,
+                borderRadius: 2,
+                "&:hover": {
+                  borderColor: "#388e3c",
+                  color: "#388e3c",
+                  bgcolor: "#222b36",
+                },
+              }}
+              onClick={() => navigate("/admin/hackathons-list")}
+            >
+              View Hackathons List
             </Button>
           </Stack>
         </Box>

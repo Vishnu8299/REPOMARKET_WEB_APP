@@ -25,7 +25,9 @@ import ProjectDetails from "@/pages/developer/ProjectDetails";
 import EditProject from "@/pages/developer/EditProject";
 import JobDetails from "@/pages/developer/JobDetails";
 import UserList from "@/pages/admin/userlist";
-
+import MarketplaceNav from "./pages/buyer/MarketplaceNav";
+import CreateHackathon from "@/pages/admin/CreateHackathon";
+import HackathonList from "@/pages/admin/HackathonList";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +101,22 @@ const App = () => {
                   element={
                     <PrivateRoute role="ADMIN">
                       <UserList />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin/create-hackathon"
+                  element={
+                    <PrivateRoute role="ADMIN">
+                      <CreateHackathon />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin/hackathons-list"
+                  element={
+                    <PrivateRoute role="ADMIN">
+                      <HackathonList />
                     </PrivateRoute>
                   }
                 />
@@ -208,6 +226,14 @@ const App = () => {
                       <Marketplace />
                     </PrivateRoute>
                   } 
+                />
+                <Route 
+                  path="/buyer/marketplacenav" 
+                  element={
+                    <PrivateRoute role="BUYER">
+                      <MarketplaceNav />
+                    </PrivateRoute>
+                  }
                 />
                 <Route 
                   path="/buyer/profile" 
