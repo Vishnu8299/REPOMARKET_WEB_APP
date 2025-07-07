@@ -13,9 +13,16 @@ import {
   Avatar,
   Tooltip,
   Grow,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
 } from "@mui/material";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import GroupIcon from "@mui/icons-material/Group";
+import EditIcon from "@mui/icons-material/Edit";
 import axios from "axios";
 
 const API_URL = "/api/hackathons";
@@ -38,7 +45,14 @@ const HackathonList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [selectedHackathon, setSelectedHackathon] = useState<any | null>(null);
+
   useEffect(() => {
+    fetchHackathons();
+  }, []);
+
+  const fetchHackathons = () => {
     setLoading(true);
     axios
       .get(API_URL)
@@ -51,7 +65,32 @@ const HackathonList: React.FC = () => {
         setHackathons([]);
       })
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  const handleEditClick = (hackathon: any) => {
+    setSelectedHackathon({ ...hackathon });
+    setOpenEditDialog(true);
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedHackathon({
+      ...selectedHackathon,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleUpdateHackathon = async () => {
+    try {
+      await axios.put(`${API_URL}/${selectedHackathon.id}`, selectedHackathon);
+      setHackathons((prev) =>
+        prev.map((h) => (h.id === selectedHackathon.id ? selectedHackathon : h))
+      );
+      setOpenEditDialog(false);
+    } catch (error) {
+      alert("Failed to update hackathon");
+      console.error(error);
+    }
+  };
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#181A20", py: 6 }}>
@@ -201,7 +240,6 @@ const HackathonList: React.FC = () => {
                     </Stack>
                   </>
                 )}
-                {/* Participants Section */}
                 <Divider sx={{ bgcolor: "#333", my: 2 }} />
                 <Typography
                   variant="body2"
@@ -247,13 +285,6 @@ const HackathonList: React.FC = () => {
                     ))}
                   </Stack>
                 </Collapse>
-                {!hack.participants || hack.participants.length === 0 ? (
-                  <Fade in>
-                    <Typography variant="body2" sx={{ color: "#fff", mb: 2 }}>
-                      No participants yet.
-                    </Typography>
-                  </Fade>
-                ) : null}
                 <Divider sx={{ bgcolor: "#333", my: 2 }} />
                 <Stack direction="row" spacing={2}>
                   <Tooltip title="Organizer" arrow>
@@ -267,11 +298,87 @@ const HackathonList: React.FC = () => {
                     </Typography>
                   </Tooltip>
                 </Stack>
+
+                {/* 👇 Edit Button */}
+                <Button
+                  size="small"
+                  startIcon={<EditIcon />}
+                  variant="outlined"
+                  sx={{
+                    mt: 2,
+                    color: "#90caf9",
+                    borderColor: "#90caf9",
+                    "&:hover": {
+                      borderColor: "#64b5f6",
+                      backgroundColor: "#263238",
+                    },
+                  }}
+                  onClick={() => handleEditClick(hack)}
+                >
+                  Edit
+                </Button>
               </Paper>
             </Grow>
           ))}
         </Stack>
       )}
+
+      {/* 👇 Edit Dialog */}
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Edit Hackathon</DialogTitle>
+        <DialogContent dividers>
+          {selectedHackathon && (
+            <>
+              <TextField
+                label="Name"
+                name="name"
+                fullWidth
+                margin="normal"
+                value={selectedHackathon.name}
+                onChange={handleEditChange}
+              />
+              <TextField
+                label="Description"
+                name="description"
+                fullWidth
+                margin="normal"
+                multiline
+                minRows={3}
+                value={selectedHackathon.description}
+                onChange={handleEditChange}
+              />
+              <TextField
+                label="Start Date"
+                name="startDate"
+                type="datetime-local"
+                fullWidth
+                margin="normal"
+                value={selectedHackathon.startDate}
+                onChange={handleEditChange}
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                label="End Date"
+                name="endDate"
+                type="datetime-local"
+                fullWidth
+                margin="normal"
+                value={selectedHackathon.endDate}
+                onChange={handleEditChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditDialog(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleUpdateHackathon} variant="contained" color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

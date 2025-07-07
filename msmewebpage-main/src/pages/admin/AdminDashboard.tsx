@@ -347,26 +347,6 @@ const AdminDashboard: React.FC = () => {
               Manage Users
             </Button>
             <Button
-              variant="outlined"
-              color="primary"
-              size="large"
-              sx={{
-                color: "#90caf9",
-                borderColor: "#90caf9",
-                fontWeight: 600,
-                px: 4,
-                borderRadius: 2,
-                "&:hover": {
-                  borderColor: "#1976d2",
-                  color: "#1976d2",
-                  bgcolor: "#222b36",
-                },
-              }}
-              onClick={() => navigate("/admin/hackathons")}
-            >
-              Manage Hackathons
-            </Button>
-            <Button
               variant="contained"
               color="secondary"
               size="large"
