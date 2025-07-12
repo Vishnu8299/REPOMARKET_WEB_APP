@@ -218,4 +218,24 @@ public class UserController {
                         .body(ApiResponse.error("Failed to retrieve user: " + ex.getMessage())));
                 });
     }
+
+    // Public endpoint for buyers to fetch developer information
+    @GetMapping("/public/{userId}")
+    public Mono<ResponseEntity<ApiResponse<User>>> getUserByIdPublic(
+            @PathVariable("userId") String userId) {
+        logger.info("[PUBLIC] Retrieving user by ID: {}", userId);
+        return userService.findById(userId)
+                .map(user -> ResponseEntity.ok(
+                    ApiResponse.success(user, "User retrieved successfully")
+                ))
+                .defaultIfEmpty(ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("User not found")))
+                .onErrorResume(ex -> {
+                    logger.error("[PUBLIC] Failed to retrieve user by ID", ex);
+                    return Mono.just(ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ApiResponse.error("Failed to retrieve user: " + ex.getMessage())));
+                });
+    }
 }
