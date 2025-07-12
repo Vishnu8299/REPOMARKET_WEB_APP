@@ -21,6 +21,10 @@ import org.springframework.security.core.Authentication;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+import com.example.jwtdemo.dto.ProjectDetailsDto;
+import com.example.jwtdemo.service.UserService;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -29,6 +33,9 @@ public class ProjectController {
 
     @Autowired
     private ProjectService projectService;
+    
+    @Autowired
+    private UserService userService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('DEVELOPER')")
@@ -143,16 +150,19 @@ public class ProjectController {
     }
 
     @GetMapping
-    public Mono<ResponseEntity<ApiResponse<Flux<Project>>>> getAllProjects() {
+    public Mono<ResponseEntity<ApiResponse<List<Project>>>> getAllProjects() {
         logger.info("Retrieving all projects");
-        return Mono.just(ResponseEntity.ok(
-            ApiResponse.success(projectService.getAllProjects(), "Projects retrieved successfully")
-        )).onErrorResume(ex -> {
-            logger.error("Failed to retrieve projects", ex);
-            return Mono.just(ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Failed to retrieve projects: " + ex.getMessage())));
-        });
+        return projectService.getAllProjects()
+            .collectList()
+            .map(projects -> ResponseEntity.ok(
+                ApiResponse.success(projects, "Projects retrieved successfully")
+            ))
+            .onErrorResume(ex -> {
+                logger.error("Failed to retrieve projects", ex);
+                return Mono.just(ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve projects: " + ex.getMessage())));
+            });
     }
 
     @GetMapping("/developer/{email}")
@@ -268,6 +278,148 @@ public class ProjectController {
                 return Mono.just(ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.<Project>error("Failed to retrieve project: " + ex.getMessage())));
+            });
+    }
+
+    // New public endpoint for buyers to fetch project details (including all file types)
+    @GetMapping("/public/{id}")
+    public Mono<ResponseEntity<ApiResponse<Project>>> getProjectByIdPublic(
+            @PathVariable @NotBlank(message = "Project ID cannot be blank") String id) {
+        logger.info("[PUBLIC] Retrieving project with ID: {}", id);
+
+        if (id == null || id.trim().isEmpty()) {
+            return Mono.just(ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.<Project>error("Project ID is required")));
+        }
+
+        // No authentication or role check, return all files as-is
+        return projectService.getProjectById(id)
+            .map(project -> {
+                logger.info("[PUBLIC] Project found: {}", project.getId());
+                return ResponseEntity.ok(ApiResponse.success(project, "Project retrieved successfully"));
+            })
+            .defaultIfEmpty(ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.<Project>error("Project not found")))
+            .onErrorResume(ex -> {
+                logger.error("[PUBLIC] Failed to retrieve project: {}", ex.getMessage());
+                return Mono.just(ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.<Project>error("Failed to retrieve project: " + ex.getMessage())));
+            });
+    }
+
+    // Enhanced public endpoint for comprehensive project details including developer info
+    @GetMapping("/public/{id}/details")
+    public Mono<ResponseEntity<ApiResponse<ProjectDetailsDto>>> getProjectDetails(
+            @PathVariable @NotBlank(message = "Project ID cannot be blank") String id) {
+        logger.info("[PUBLIC] Retrieving comprehensive project details for ID: {}", id);
+
+        if (id == null || id.trim().isEmpty()) {
+            return Mono.just(ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.<ProjectDetailsDto>error("Project ID is required")));
+        }
+
+        return projectService.getProjectById(id)
+            .flatMap(project -> {
+                logger.info("[PUBLIC] Project found: {}", project.getId());
+                
+                // Fetch developer information
+                return userService.findByEmail(project.getUserId())
+                    .map(developer -> {
+                        ProjectDetailsDto detailsDto = new ProjectDetailsDto(project, developer);
+                        
+                        // Add basic stats
+                        Map<String, Object> stats = new HashMap<>();
+                        stats.put("projectId", project.getId());
+                        stats.put("viewCount", 0); // TODO: Implement view tracking
+                        stats.put("downloadCount", 0); // TODO: Implement download tracking
+                        stats.put("rating", 0.0); // TODO: Implement rating system
+                        stats.put("reviewCount", 0); // TODO: Implement review system
+                        detailsDto.setStats(stats);
+                        
+                        return ResponseEntity.ok(ApiResponse.success(detailsDto, "Project details retrieved successfully"));
+                    })
+                    .defaultIfEmpty(ResponseEntity.ok(ApiResponse.success(
+                        new ProjectDetailsDto(project, null), 
+                        "Project details retrieved successfully (developer info not found)"
+                    )));
+            })
+            .defaultIfEmpty(ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.<ProjectDetailsDto>error("Project not found")))
+            .onErrorResume(ex -> {
+                logger.error("[PUBLIC] Failed to retrieve project details: {}", ex.getMessage());
+                return Mono.just(ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.<ProjectDetailsDto>error("Failed to retrieve project details: " + ex.getMessage())));
+            });
+    }
+
+    // Get project statistics for details page
+    @GetMapping("/public/{id}/stats")
+    public Mono<ResponseEntity<ApiResponse<Map<String, Object>>>> getProjectStats(
+            @PathVariable @NotBlank(message = "Project ID cannot be blank") String id) {
+        logger.info("[PUBLIC] Retrieving project stats for ID: {}", id);
+        
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("projectId", id);
+        stats.put("viewCount", 0); // TODO: Implement view tracking
+        stats.put("downloadCount", 0); // TODO: Implement download tracking
+        stats.put("rating", 0.0); // TODO: Implement rating system
+        stats.put("reviewCount", 0); // TODO: Implement review system
+        
+        return Mono.just(ResponseEntity.ok(
+            ApiResponse.success(stats, "Project statistics retrieved successfully")
+        ));
+    }
+
+    // Track project view (for analytics)
+    @PostMapping("/public/{id}/view")
+    public Mono<ResponseEntity<ApiResponse<String>>> trackProjectView(
+            @PathVariable @NotBlank(message = "Project ID cannot be blank") String id) {
+        logger.info("[PUBLIC] Tracking view for project ID: {}", id);
+        
+        // TODO: Implement view tracking logic
+        // This could increment a view counter in the database
+        
+        return Mono.just(ResponseEntity.ok(
+            ApiResponse.success("View tracked successfully", "Project view tracked")
+        ));
+    }
+
+    // Download file from project
+    @GetMapping("/public/{projectId}/files/{filename}/download")
+    public Mono<ResponseEntity<byte[]>> downloadProjectFile(
+            @PathVariable @NotBlank(message = "Project ID cannot be blank") String projectId,
+            @PathVariable @NotBlank(message = "Filename cannot be blank") String filename) {
+        logger.info("[PUBLIC] Downloading file {} from project {}", filename, projectId);
+        
+        return projectService.getProjectById(projectId)
+            .flatMap(project -> {
+                if (project.getFiles() == null) {
+                    return Mono.empty();
+                }
+                
+                return project.getFiles().stream()
+                    .filter(file -> file.getFilename().equals(filename))
+                    .findFirst()
+                    .map(file -> {
+                        // TODO: Implement download tracking
+                        return ResponseEntity.ok()
+                            .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                            .header("Content-Type", file.getContentType())
+                            .body(file.getData());
+                    })
+                    .map(Mono::just)
+                    .orElse(Mono.empty());
+            })
+            .defaultIfEmpty(ResponseEntity.notFound().build())
+            .onErrorResume(ex -> {
+                logger.error("[PUBLIC] Failed to download file: {}", ex.getMessage());
+                return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
             });
     }
 }

@@ -28,6 +28,7 @@ import UserList from "@/pages/admin/userlist";
 import MarketplaceNav from "./pages/buyer/MarketplaceNav";
 import CreateHackathon from "@/pages/admin/CreateHackathon";
 import HackathonList from "@/pages/admin/HackathonList";
+import BuyerProjectDetails from "@/pages/buyer/ProjectDetails";
 
 const queryClient = new QueryClient();
 
@@ -248,6 +249,14 @@ const App = () => {
                   element={
                     <PrivateRoute role="BUYER">
                       <News />
+                    </PrivateRoute>
+                  } 
+                />
+                <Route 
+                  path="/buyer/project/:id" 
+                  element={
+                    <PrivateRoute role="BUYER">
+                      <BuyerProjectDetails />
                     </PrivateRoute>
                   } 
                 />
