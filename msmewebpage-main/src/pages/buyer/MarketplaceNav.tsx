@@ -97,19 +97,36 @@ const MarketplaceNav = () => {
     'bg-gray-100',
   ];
 
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading
+    const timer = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div
-      className="min-h-screen w-full bg-cover bg-center bg-no-repeat relative"
-      style={{
-        backgroundImage: "url('/lovable-uploads/davies-designs-studio-f5_lfi2S-d4-unsplash.jpg')"
-      }}
-    >
-      {/* Optional overlay for readability */}
-      <div className="absolute inset-0 bg-white bg-opacity-70 pointer-events-none z-0" />
-      <div className="w-full px-0 py-8 relative z-10">
-        <div className="flex flex-col lg:flex-row gap-y-8 lg:gap-y-0 lg:gap-x-12 items-start">
+    <div className="min-h-screen w-full bg-gray-50 relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 z-0" />
+      <div className="w-full px-4 sm:px-6 py-8 relative z-10 max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Marketplace</h1>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm h-64 animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Sidebar filter card */}
-          <div className="w-full max-w-xs bg-white rounded-2xl shadow-lg p-6 flex flex-col">
+          <div className="w-full lg:w-80 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex-shrink-0 sticky top-8">
             {/* Top blue gradient section */}
             <div className="rounded-xl bg-gradient-to-b from-blue-500 to-blue-700 p-6 flex flex-col items-center mb-6">
               <div className="text-white font-bold text-lg mb-4 text-center">Find the projects</div>
@@ -168,23 +185,17 @@ const MarketplaceNav = () => {
           </div>
           {/* Main content (search/filter bar and cards) */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center bg-white rounded-full shadow px-4 py-2 w-full max-w-lg">
-                <Search className="w-5 h-5 mr-2 text-gray-400" />
+            <div className="w-full mb-8">
+              <div className="relative max-w-2xl">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search opportunities..."
+                  placeholder="Search projects or users..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full bg-transparent border-none outline-none text-gray-700 placeholder-gray-400"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
-              <button
-                className="flex items-center bg-white rounded-full shadow px-4 py-2 font-semibold text-sm text-gray-900 hover:bg-gray-100 transition-colors duration-200"
-              >
-                <Filter className="w-5 h-5 mr-2 text-gray-500" />
-                Filters
-              </button>
             </div>
             <div className="grid gap-8">
               <div>
@@ -192,48 +203,86 @@ const MarketplaceNav = () => {
                 {filteredProjects.length === 0 && (
                   <div className="text-gray-500 text-center">No projects found.</div>
                 )}
-                <div
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredProjects.map((project, idx) => (
                     <Card
                       key={project.id}
-                      className={`${cardColors[idx % cardColors.length]} mb-4 rounded-2xl shadow-md p-6 flex flex-col justify-between min-h-[220px] group transition-all duration-300 transform hover:scale-105 hover:shadow-xl`}
+                      className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group"
                     >
-                      {/* Title at the top */}
-                      <div className="text-lg font-bold text-gray-900 mb-2 text-left truncate">{project.name}</div>
-                      {/* Description below title */}
-                      <div className="text-gray-700 text-sm mb-6 text-left line-clamp-3 font-normal">{project.description}</div>
-                      {/* Bottom row: author and button */}
-                      <div className="flex items-center justify-between mt-auto">
-                        <div className="text-xs text-gray-500">Owner: {project.userId}</div>
-                        <Button
-                          size="sm"
-                          className="bg-black text-white rounded-full px-6 py-2 hover:bg-gray-900 transition-colors duration-200 hidden group-hover:inline-block"
-                          onClick={e => { e.stopPropagation(); navigate(`/buyer/project/${project.id}`); }}
-                        >
-                          Details
-                        </Button>
+                      <div className="h-2 ${cardColors[idx % cardColors.length]}"></div>
+                      <div className="p-6">
+                        <div className="flex justify-between items-start mb-3">
+                          <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{project.name}</h3>
+                        </div>
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                          {project.description || 'No description available'}
+                        </p>
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                          <div className="flex items-center">
+                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600">
+                              {project.userId?.charAt(0)?.toUpperCase() || 'U'}
+                            </div>
+                            <span className="ml-2 text-sm text-gray-500">
+                              {project.userId ? project.userId.substring(0, 15) + (project.userId.length > 15 ? '...' : '') : 'Unknown'}
+                            </span>
+                          </div>
+                          <button
+                            onClick={e => { e.stopPropagation(); navigate(`/buyer/project/${project.id}`); }}
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                          >
+                            View Details →
+                          </button>
+                        </div>
                       </div>
                     </Card>
                   ))}
                 </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold mb-2">Users</h2>
-                {filteredUsers.length === 0 && (
-                  <div className="text-gray-500 text-center">No users found.</div>
+              <div className="mt-12">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Top Sellers</h2>
+                {filteredUsers.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 mb-2">No users found</div>
+                    <p className="text-sm text-gray-500">Try adjusting your search or check back later</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredUsers.map((user, idx) => (
+                      <Card key={user.id} className="p-5 hover:shadow-md transition-shadow duration-200">
+                        <div className="flex items-center space-x-4">
+                          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                            {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-gray-900">{user.name || 'Anonymous User'}</h3>
+                            <p className="text-sm text-gray-500 truncate max-w-[200px]">{user.email}</p>
+                            <div className="flex items-center mt-1">
+                              {[...Array(5)].map((_, i) => (
+                                <svg
+                                  key={i}
+                                  className={`w-4 h-4 ${i < 4 ? 'text-yellow-400' : 'text-gray-300'}`}
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              ))}
+                              <span className="text-xs text-gray-500 ml-1">(24)</span>
+                            </div>
+                          </div>
+                        </div>
+                        <button className="mt-4 w-full py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
+                          View Profile
+                        </button>
+                      </Card>
+                    ))}
+                  </div>
                 )}
-                {filteredUsers.map(user => (
-                  <Card key={user.id} className="p-6 mb-4">
-                    <div className="font-bold text-lg">{user.name}</div>
-                    <div className="text-gray-500 text-sm mb-2">{user.email}</div>
-                  </Card>
-                ))}
               </div>
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
