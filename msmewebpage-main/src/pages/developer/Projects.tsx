@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
+import { 
   GitBranch, Search, Filter,
   Plus, Star, Eye, Lock,
-  Calendar, Users, ArrowRight, AlertTriangle, Loader2, CheckCircle, Edit3, UploadCloud, MessageCircle
+  Calendar, Users, ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,7 +74,7 @@ const Projects = () => {
     try {
       const token = localStorage.getItem('token');
       console.log('Fetching with token:', token);
-
+      
       const response = await fetch(`${API_BASE_URL}/developer/${user.email}`, {
         method: 'GET',
         headers: {
@@ -94,14 +94,14 @@ const Projects = () => {
       }
 
       const apiResponse: ApiResponse<Project[]> = JSON.parse(responseText);
-
+      
       if (apiResponse.success && Array.isArray(apiResponse.data)) {
         setProjects(apiResponse.data);
       } else {
         setProjects([]);
         console.warn('Received invalid data format:', apiResponse);
       }
-
+      
       setLoading(false);
       setIsRetrying(false);
       setRetryCount(0);
@@ -185,7 +185,7 @@ const Projects = () => {
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          project.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filter === 'all' ||
+    const matchesFilter = filter === 'all' || 
                          (filter === 'active' && project.isActive) ||
                          (filter === 'completed' && !project.isActive);
     return matchesSearch && matchesFilter;
@@ -198,56 +198,25 @@ const Projects = () => {
         : activities.filter(a => a.action === activityFilter))
     : [];
 
-  const activityIcons: Record<string, JSX.Element> = {
-    CREATED_PROJECT: <CheckCircle className="w-5 h-5 text-green-500" />, // Created
-    EDITED_PROJECT: <Edit3 className="w-5 h-5 text-blue-500" />, // Edited
-    UPLOADED_FILE: <UploadCloud className="w-5 h-5 text-purple-500" />, // Uploaded
-    COMMENTED: <MessageCircle className="w-5 h-5 text-yellow-500" />, // Commented
-  };
-
-  // Custom style for bold select option
-  const boldOptionStyle = { fontWeight: 600 };
-
-  // Pastel color palette for cards
-  const pastelColors = [
-    'bg-blue-100',
-    'bg-green-100',
-    'bg-yellow-100',
-    'bg-purple-100',
-    'bg-pink-100',
-    'bg-teal-100',
-  ];
-
   // Enhanced loading animation
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-purple-100">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <Loader2 className="animate-spin text-blue-500 w-12 h-12 mb-2" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent mb-4"></div>
           <div className="text-2xl text-blue-700 font-semibold animate-pulse">
             {isRetrying ? 'Retrying...' : 'Loading your projects...'}
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-white to-purple-100 gap-6">
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="flex flex-col items-center gap-2"
-        >
-          <AlertTriangle className="w-12 h-12 text-red-500 mb-2" />
-          <div className="text-2xl text-red-600 font-semibold">{error}</div>
-        </motion.div>
-        <Button
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center justify-center gap-4">
+        <div className="text-2xl text-red-600 font-semibold">{error}</div>
+        <Button 
           onClick={handleRetry}
           disabled={isRetrying}
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium text-lg shadow"
@@ -267,50 +236,36 @@ const Projects = () => {
   };
 
   return (
-    <div
-      className="min-h-screen py-0 relative"
-      style={{
-        backgroundImage: `url('/lovable-uploads/twilight-cloud.jpg')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
-      {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-100/80 via-white/80 to-purple-100/80 pointer-events-none z-0" />
-      {/* Hero Header */}
-      <div className="relative overflow-hidden pb-10 z-10">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-200/40 via-white/0 to-purple-200/40 pointer-events-none" />
-        <div className="container mx-auto px-4 max-w-7xl pt-16 pb-8 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="z-10">
-            <h1 className="text-5xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-600 mb-3 drop-shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12">
+      <div className="container mx-auto px-4 max-w-7xl">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-4">
+          <div>
+            <h1 className="text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 mb-2 drop-shadow">
               Your Projects
             </h1>
-            <p className="text-gray-600 text-lg md:text-xl max-w-xl">
-              Manage and collaborate on your development projects with ease and clarity.
+            <p className="text-gray-600 text-lg">
+              Manage and collaborate on your development projects
             </p>
           </div>
           <motion.div
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
-            className="z-10"
+            className="shadow-lg"
           >
             <Button
               onClick={() => navigate("/developer/projects/new")}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-xl transition-all duration-200 flex items-center gap-2"
-              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-7 py-3 rounded-xl font-semibold text-lg shadow transition-all duration-200"
             >
-              <Plus className="w-6 h-6" />
+              <Plus className="w-5 h-5 mr-2" />
               New Project
             </Button>
           </motion.div>
         </div>
-      </div>
 
-      {/* Filters and Search */}
-      <div className="sticky top-0 z-20 bg-gradient-to-r from-blue-50/80 via-white/80 to-purple-50/80 backdrop-blur-md py-4 shadow-sm">
-        <div className="container mx-auto px-4 max-w-7xl flex flex-col sm:flex-row gap-6 items-center">
-          <div className="relative flex-1 w-full">
+        {/* Filters and Search */}
+        <div className="flex flex-col sm:flex-row gap-6 mb-12">
+          <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-400 w-5 h-5" />
             <Input
               type="search"
@@ -321,7 +276,7 @@ const Projects = () => {
             />
           </div>
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[200px] h-12 text-lg rounded-xl border-blue-200 bg-white shadow flex items-center">
+            <SelectTrigger className="w-[200px] h-12 text-lg rounded-xl border-blue-200 bg-white shadow">
               <Filter className="w-5 h-5 mr-2" />
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -332,72 +287,67 @@ const Projects = () => {
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      {/* Projects Grid */}
-      <div className="container mx-auto px-4 max-w-7xl mt-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+        {/* Projects Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProjects.length > 0 ? (
-            filteredProjects.map((project, idx) => {
-              const cardColor = pastelColors[idx % pastelColors.length];
-              return (
-                <motion.div
-                  key={`${project.id}-${project.name}`}
-                  variants={cardVariants}
-                  whileHover="hover"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={twMerge(
-                    `group relative overflow-hidden rounded-2xl ${cardColor} p-7 shadow-lg border border-blue-100 transition-all duration-300 cursor-pointer flex flex-col min-h-[220px]`,
-                    project.isActive ? "hover:border-green-400" : "hover:border-gray-300"
-                  )}
-                  onClick={() => handleProjectClick(project)}
-                  tabIndex={0}
-                  aria-label={`View project ${project.name}`}
-                  role="button"
-                >
-                  {/* Title */}
-                  <div className="mb-2">
-                    <h3 className="font-extrabold text-2xl text-blue-900 mb-1 truncate">{project.name}</h3>
+            filteredProjects.map((project) => (
+              <motion.div
+                key={`${project.id}-${project.name}`}
+                variants={cardVariants}
+                whileHover="hover"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className={twMerge(
+                  "group relative overflow-hidden rounded-2xl bg-white p-7 shadow-xl border border-blue-100 hover:shadow-2xl transition-all duration-300 cursor-pointer",
+                  project.isActive ? "hover:border-green-400" : "hover:border-gray-300"
+                )}
+                onClick={() => handleProjectClick(project)}
+              >
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-xl text-blue-700 truncate">{project.name}</h3>
+                    <Eye className="w-5 h-5 text-blue-400" />
                   </div>
-                  {/* Description */}
-                  <div className="mb-4">
-                    <p className="text-gray-700 text-base leading-snug line-clamp-3">{project.description || 'No description provided'}</p>
-                  </div>
-                  {/* Status and Date Row */}
-                  <div className="flex items-center justify-between mt-auto">
-                    {/* Status */}
-                    <div className="flex items-center gap-2">
-                      {project.isActive ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-green-200 text-green-800 text-sm font-semibold">
-                          <Star className="w-4 h-4 mr-1" /> Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-200 text-gray-700 text-sm font-semibold">
-                          <Lock className="w-4 h-4 mr-1" /> Completed
-                        </span>
-                      )}
+                  <p className="text-gray-600 text-base mb-4 line-clamp-3">
+                    {project.description || 'No description provided'}
+                  </p>
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center">
+                        <Users className="w-4 h-4 mr-1" />
+                        <span>{project.organization}</span>
+                      </div>
                     </div>
-                    {/* Date and Arrow */}
-                    <div className="flex flex-col items-end">
-                      <span className="flex items-center text-gray-600 text-sm font-medium">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {new Date(project.createdAt).toLocaleDateString()}
-                      </span>
-                      <span className="mt-2">
-                        <ArrowRight className="w-7 h-7 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                      </span>
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      <span>{new Date(project.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
-                </motion.div>
-              );
-            })
+                  <div className="flex items-center gap-2 mt-2">
+                    {project.isActive ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs font-semibold">
+                        <Star className="w-3 h-3 mr-1" /> Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-500 text-xs font-semibold">
+                        <Lock className="w-3 h-3 mr-1" /> Completed
+                      </span>
+                    )}
+                  </div>
+                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ArrowRight className="w-6 h-6 text-blue-400" />
+                  </div>
+                </div>
+                <div className="absolute inset-0 pointer-events-none group-hover:bg-gradient-to-br group-hover:from-blue-50 group-hover:to-purple-50 transition-all duration-300" />
+              </motion.div>
+            ))
           ) : (
-            <motion.div
+            <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="col-span-full text-center py-16"
+              className="col-span-full text-center py-12"
             >
               <div className="text-gray-400 text-2xl mb-4 font-semibold">No projects found</div>
               <Button
@@ -410,50 +360,41 @@ const Projects = () => {
             </motion.div>
           )}
         </div>
-      </div>
 
-      {/* Recent Activity Section */}
-      <div className="container mx-auto px-4 max-w-7xl mt-16 mb-10">
-        <div className="flex flex-col gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-blue-900 drop-shadow flex items-center gap-3">
-              Recent Activity
-              <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full ml-2 font-semibold">
-                Days Active: {streakDays}
-              </span>
-            </h2>
+        {/* Recent Activity Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-4">
+            Recent Activity
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+              Days Active: {streakDays}
+            </span>
             <select
-              className="ml-4 border rounded px-3 py-2 text-base font-medium focus:ring-2 focus:ring-blue-200 bg-white shadow"
+              className="ml-4 border rounded px-2 py-1 text-sm"
               value={activityFilter}
               onChange={e => setActivityFilter(e.target.value)}
             >
-              <option value="all" style={boldOptionStyle}>All</option>
+              <option value="all">All</option>
               <option value="CREATED_PROJECT">Created Project</option>
               <option value="EDITED_PROJECT">Edited Project</option>
               <option value="UPLOADED_FILE">Uploaded File</option>
               <option value="COMMENTED">Commented</option>
             </select>
-          </div>
-          <div className="rounded-3xl shadow-2xl border border-blue-200 bg-gradient-to-br from-white/95 via-blue-50/90 to-purple-50/90 p-10 min-h-[140px] flex flex-col justify-center">
+          </h2>
+          <div className="bg-white rounded-xl shadow p-6 border border-blue-100">
             {filteredActivities.length === 0 ? (
-              <div className="text-gray-400 text-center font-extrabold text-xl tracking-wide">No recent activity</div>
+              <div className="text-gray-400">No recent activity</div>
             ) : (
-              <ol className="relative border-l-2 border-blue-100 ml-2">
-                {filteredActivities.slice(0, 7).map((activity, idx) => (
-                  <li key={activity.id} className="mb-8 ml-6 flex items-start gap-4 group">
-                    <span className="absolute -left-4 flex items-center justify-center w-8 h-8 bg-white border-2 border-blue-200 rounded-full shadow group-hover:border-blue-400 transition-all">
-                      {activityIcons[activity.action] || <GitBranch className="w-5 h-5 text-gray-400" />}
+              <ul className="divide-y divide-blue-50">
+                {filteredActivities.slice(0, 7).map((activity) => (
+                  <li key={activity.id} className="py-2 flex items-center gap-4">
+                    <span className="text-blue-700 font-semibold">{activity.action.replace(/_/g, " ")}</span>
+                    <span className="text-gray-600">{activity.description}</span>
+                    <span className="ml-auto text-xs text-gray-400">
+                      {new Date(activity.timestamp).toLocaleDateString()}
                     </span>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-blue-700 text-base">{activity.action.replace(/_/g, " ")}</span>
-                        <span className="text-xs text-gray-400 font-semibold">{new Date(activity.timestamp).toLocaleDateString()}</span>
-                      </div>
-                      <div className="text-gray-700 text-sm mt-1 font-medium">{activity.description}</div>
-                    </div>
                   </li>
                 ))}
-              </ol>
+              </ul>
             )}
           </div>
         </div>

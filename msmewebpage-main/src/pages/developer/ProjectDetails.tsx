@@ -358,19 +358,7 @@ const ProjectDetails = () => {
   }
 
   return (
-    <div
-      className="min-h-screen w-full relative"
-      style={{
-        backgroundImage: "url('/lovable-uploads/davies-designs-studio-f5_lfi2S-d4-unsplash.jpg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
-      {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-blue-50/70 to-purple-50/70 pointer-events-none z-0" />
-      <div className="relative z-10 min-h-screen w-full">
-        <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <div className="mb-8">
         <Breadcrumb
@@ -688,8 +676,6 @@ const ProjectDetails = () => {
         >
           Back to Projects
         </Button>
-      </div>
-        </div>
       </div>
     </div>
   );
