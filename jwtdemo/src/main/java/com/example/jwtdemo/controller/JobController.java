@@ -1,12 +1,23 @@
 package com.example.jwtdemo.controller;
 
+import com.example.jwtdemo.dto.ApiResponse;
+import com.example.jwtdemo.dto.JobDto;
+import com.example.jwtdemo.dto.InternshipDto;
+import com.example.jwtdemo.dto.ProblemDto;
+import com.example.jwtdemo.service.JobService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.ResponseEntity;
+import reactor.core.publisher.Mono;
+import java.security.Principal;
+import java.util.List;
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/jobs")
@@ -19,6 +30,9 @@ public class JobController {
     private String adzunaAppKey;
 
     private final WebClient webClient = WebClient.create();
+
+    @Autowired
+    private JobService jobService;
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> getJobs(
@@ -53,5 +67,73 @@ public class JobController {
         RestTemplate restTemplate = new RestTemplate();
         String response = restTemplate.getForObject(url.toString(), String.class);
         return ResponseEntity.ok(response);
+    }
+
+    // --- Post Job (BUYER only) ---
+    @PostMapping("/post-job")
+    @PreAuthorize("hasRole('BUYER')")
+    public Mono<ResponseEntity<ApiResponse<JobDto>>> postJob(
+            @RequestBody JobDto jobDto,
+            Principal principal) {
+        jobDto.setPostedAt(Instant.now());
+        return jobService.createJob(jobDto, principal.getName())
+                .map(savedJob -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body(ApiResponse.success(savedJob, "Job posted successfully")))
+                .onErrorResume(ex -> Mono.just(ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Failed to post job: " + ex.getMessage()))));
+    }
+
+    // --- Post Internship (BUYER only) ---
+    @PostMapping("/post-internship")
+    @PreAuthorize("hasRole('BUYER')")
+    public Mono<ResponseEntity<ApiResponse<InternshipDto>>> postInternship(
+            @RequestBody InternshipDto internshipDto,
+            Principal principal) {
+        internshipDto.setPostedAt(Instant.now());
+        return jobService.createInternship(internshipDto, principal.getName())
+                .map(savedInternship -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body(ApiResponse.success(savedInternship, "Internship posted successfully")))
+                .onErrorResume(ex -> Mono.just(ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Failed to post internship: " + ex.getMessage()))));
+    }
+
+    // --- Post Problem (BUYER only) ---
+    @PostMapping("/post-problem")
+    @PreAuthorize("hasRole('BUYER')")
+    public Mono<ResponseEntity<ApiResponse<ProblemDto>>> postProblem(
+            @RequestBody ProblemDto problemDto,
+            Principal principal) {
+        problemDto.setPostedAt(Instant.now());
+        return jobService.createProblem(problemDto, principal.getName())
+                .map(savedProblem -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body(ApiResponse.success(savedProblem, "Problem posted successfully")))
+                .onErrorResume(ex -> Mono.just(ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Failed to post problem: " + ex.getMessage()))));
+    }
+
+    // --- Manage Posts (BUYER only) ---
+    @GetMapping("/manage-posts")
+    @PreAuthorize("hasRole('BUYER')")
+    public Mono<ResponseEntity<ApiResponse<List<Object>>>> managePosts(Principal principal) {
+        return jobService.getPostsByBuyer(principal.getName())
+                .map(posts -> ResponseEntity.ok(ApiResponse.success(posts, "Posts retrieved successfully")))
+                .onErrorResume(ex -> Mono.just(ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ApiResponse.error("Failed to retrieve posts: " + ex.getMessage()))));
+    }
+
+    @DeleteMapping("/manage-posts/{postId}")
+    @PreAuthorize("hasRole('BUYER')")
+    public Mono<ResponseEntity<ApiResponse<Void>>> deletePost(
+            @PathVariable String postId,
+            Principal principal) {
+        return jobService.deletePostByBuyer(postId, principal.getName())
+                .then(Mono.just(ResponseEntity.ok(ApiResponse.<Void>success(null, "Post deleted successfully"))))
+                .onErrorResume(ex -> Mono.just(ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Failed to delete post: " + ex.getMessage()))));
     }
 }

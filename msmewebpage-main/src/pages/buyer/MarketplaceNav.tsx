@@ -16,31 +16,27 @@ interface Project {
   // ...other project fields...
 }
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  // ...other user fields...
-}
-
 const MarketplaceNav = () => {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [keyword, setKeyword] = useState("");
   const [category, setCategory] = useState("");
   const [tool, setTool] = useState("");
   const [year, setYear] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
   const categories = ["All", "Web", "Mobile", "Data Science", "AI", "DevOps"];
   const tools = ["All", "React", "Angular", "Vue", "Node.js", "Python", "Java"];
   const years = ["All", "2024", "2023", "2022", "2021", "2020"];
   const navigate = useNavigate();
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
+    setIsLoading(true); // Start loading before API call
     // Fetch all projects
-    axios.get("/api/projects")
+    axios.get(`/api/projects?page=${page}&size=${pageSize}`)
       .then(res => {
         // If using ApiResponse wrapper, extract .data.data
         const data = res.data?.data;
@@ -51,24 +47,13 @@ const MarketplaceNav = () => {
         } else {
           setProjects([]);
         }
+        setIsLoading(false); // Stop loading after data is fetched
       })
-      .catch(() => setProjects([]));
-
-    // Fetch all users
-    axios.get("/api/users")
-      .then(res => {
-        // If using ApiResponse wrapper, extract .data.data
-        const data = res.data?.data;
-        if (Array.isArray(data)) {
-          setUsers(data);
-        } else if (data && data.content) {
-          setUsers(data.content);
-        } else {
-          setUsers([]);
-        }
-      })
-      .catch(() => setUsers([]));
-  }, []);
+      .catch(() => {
+        setProjects([]);
+        setIsLoading(false); // Stop loading on error
+      });
+  }, [page]);
 
   useEffect(() => {
     const lower = search.toLowerCase();
@@ -79,14 +64,7 @@ const MarketplaceNav = () => {
           (p.description && p.description.toLowerCase().includes(lower))
       )
     );
-    setFilteredUsers(
-      users.filter(
-        u =>
-          u.name.toLowerCase().includes(lower) ||
-          (u.email && u.email.toLowerCase().includes(lower))
-      )
-    );
-  }, [search, projects, users]);
+  }, [search, projects]);
 
   const cardColors = [
     'bg-blue-100',
@@ -97,31 +75,18 @@ const MarketplaceNav = () => {
     'bg-gray-100',
   ];
 
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <div className="min-h-screen w-full bg-gray-50 relative">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 z-0" />
       <div className="w-full px-4 sm:px-6 py-8 relative z-10 max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Marketplace</h1>
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm h-64 animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center min-h-[300px]">
+            <svg className="animate-spin h-10 w-10 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            <div className="text-gray-500 text-lg">Loading projects, please wait...</div>
           </div>
         ) : (
         <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -190,7 +155,7 @@ const MarketplaceNav = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search projects or users..."
+                  placeholder="Search projects..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
@@ -209,7 +174,7 @@ const MarketplaceNav = () => {
                       key={project.id}
                       className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group"
                     >
-                      <div className="h-2 ${cardColors[idx % cardColors.length]}"></div>
+                      <div className={`h-2 ${cardColors[idx % cardColors.length]}`}></div>
                       <div className="p-6">
                         <div className="flex justify-between items-start mb-3">
                           <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{project.name}</h3>
@@ -237,47 +202,23 @@ const MarketplaceNav = () => {
                     </Card>
                   ))}
                 </div>
-              </div>
-              <div className="mt-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Top Sellers</h2>
-                {filteredUsers.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-400 mb-2">No users found</div>
-                    <p className="text-sm text-gray-500">Try adjusting your search or check back later</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredUsers.map((user, idx) => (
-                      <Card key={user.id} className="p-5 hover:shadow-md transition-shadow duration-200">
-                        <div className="flex items-center space-x-4">
-                          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                            {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900">{user.name || 'Anonymous User'}</h3>
-                            <p className="text-sm text-gray-500 truncate max-w-[200px]">{user.email}</p>
-                            <div className="flex items-center mt-1">
-                              {[...Array(5)].map((_, i) => (
-                                <svg
-                                  key={i}
-                                  className={`w-4 h-4 ${i < 4 ? 'text-yellow-400' : 'text-gray-300'}`}
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                              ))}
-                              <span className="text-xs text-gray-500 ml-1">(24)</span>
-                            </div>
-                          </div>
-                        </div>
-                        <button className="mt-4 w-full py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
-                          View Profile
-                        </button>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                {/* Pagination controls */}
+                <div className="flex justify-center mt-6 gap-2">
+                  <button
+                    className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    Previous
+                  </button>
+                  <span className="px-4 py-2">{page}</span>
+                  <button
+                    className="px-4 py-2 bg-gray-200 rounded"
+                    onClick={() => setPage(p => p + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
           </div>
