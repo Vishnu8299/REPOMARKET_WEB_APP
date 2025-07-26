@@ -12,6 +12,6 @@ public class JobDto {
     private String location;
     private String type; // e.g. Full-time, Part-time
     private Double salary;
+    private Integer yearsOfExperience;
     private Instant postedAt;
-    // ...add more fields as needed...
 }
